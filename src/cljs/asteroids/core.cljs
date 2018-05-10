@@ -4,15 +4,17 @@
               [accountant.core :as accountant]
               [reagent.format :refer [format]]))
 
-(declare screen)
-
-(defonce app-state (atom {:asteroids [{:x 20 :y 20} {:x 575 :y 80}]}))
+(defonce app-state (atom {:asteroids [{:x 20 :y 20 :size 2 :speed-x 5 :speed-y 5}
+                                      {:x 795 :y 8 :size 2 :speed-x 5 :speed-y -5}]}))
 ;; -------------------------
 ;; Views
 
 (defn asteroid [props]
   [:polygon {:points "-20,-10 -5,-5 -10,-20 8,-20 20,-10 20,10 13,21 -11,24 -8,8 -20,10"
-             :transform (format "translate (%d %d) rotate(%d) scale(2 2)" (:x props) (:y props) (rand-int 360))}]
+             :transform (format "translate (%d %d) scale(%d) rotate(%d)"
+                            (:x props) (:y props)
+                            (:size props)
+                            (rand-int 360))}]
   )
 
 (defn screen [asteroids]
