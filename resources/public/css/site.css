@@ -1,6 +1,6 @@
 .body-container {
   font-family: 'Helvetica Neue', Verdana, Helvetica, Arial, sans-serif;
-  max-width: 600px;
+  max-width: 800px;
   margin: 0 auto;
   padding-top: 72px;
   -webkit-font-smoothing: antialiased;
@@ -31,4 +31,15 @@ a {
 
 a:hover {
   text-decoration: underline;
+}
+
+svg {
+  background-color:  black;
+  width: 600px;
+  height: 450px;
+}
+
+polygon {
+  stroke: #ffffff;
+  stroke-width: 1px;
 }
