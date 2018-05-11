@@ -4,24 +4,49 @@
               [accountant.core :as accountant]
               [reagent.format :refer [format]]))
 
-(defonce app-state (atom {:asteroids [{:x 20 :y 20 :size 2 :speed-x 5 :speed-y 5}
-                                      {:x 795 :y 8 :size 2 :speed-x 5 :speed-y -5}]}))
+(defonce app-state (atom {:asteroids [{:x 20 :y 20 :size 2 :speed-x 2 :speed-y 1 :rotation 13}
+                                      {:x 795 :y 8 :size 2 :speed-x -2 :speed-y 3 :rotation 184}]}))
+
+(defn wraparound [val increment max-val min-val]
+  (let [new-val (+ val increment)]
+    (cond
+      (> new-val max-val) min-val
+      (< new-val min-val) max-val
+      :else new-val
+      )
+    )
+  )
+
+(defn update-asteroid! [roid]
+  (-> roid
+    (assoc :x (wraparound (:x roid) (:speed-x roid) 820 -20))
+    (assoc :y (wraparound (:y roid) (:speed-y roid) 620 -20))
+    )
+  )
+
+(defn update-all-asteroids! []
+  (swap! app-state assoc :asteroids (map update-asteroid! (:asteroids @app-state)))
+  )
+
 ;; -------------------------
 ;; Views
 
 (defn asteroid [props]
   [:polygon {:points "-20,-10 -5,-5 -10,-20 8,-20 20,-10 20,10 13,21 -11,24 -8,8 -20,10"
+             :fill "none"
              :transform (format "translate (%d %d) scale(%d) rotate(%d)"
                             (:x props) (:y props)
                             (:size props)
-                            (rand-int 360))}]
+                            (:rotation props))}]
   )
 
 (defn screen [asteroids]
-  [:svg {:viewBox "0 0 800 600"}
-    (for [astr asteroids]
-      ^{:key astr} [asteroid astr]
-    )]
+  (js/setTimeout update-all-asteroids! 40)
+    [:svg {:viewBox "0 0 800 600"}
+      (for [astr asteroids]
+        ^{:key astr} [asteroid astr]
+      )]
+
   )
 
 (defn home-page []
