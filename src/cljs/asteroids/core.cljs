@@ -4,8 +4,8 @@
               [accountant.core :as accountant]
               [reagent.format :refer [format]]))
 
-(defonce app-state (atom {:asteroids [{:x 20 :y 20 :size 2 :speed-x 2 :speed-y 1 :rotation 13}
-                                      {:x 795 :y 8 :size 2 :speed-x -2 :speed-y 3 :rotation 184}]}))
+(defonce app-state (atom {:asteroids '({:x 20 :y 20 :size 2 :speed-x 2 :speed-y 1 :rotation 13 :destroyed true}
+                                      {:x 795 :y 8 :size 2 :speed-x -2 :speed-y 3 :rotation 184 :destroyed true})}))
 
 (defn wraparound [val increment max-val min-val]
   (let [new-val (+ val increment)]
@@ -24,11 +24,24 @@
     )
   )
 
+(defn split-asteroid [roid]
+  (list {:x (:x roid) , :y (:y roid) , :speed-x (:speed-x roid) ,
+         :speed-y (* 1.5 (:speed-y roid)) , :size (/ (:size roid) 2) , :rotation (rand-int 360)}
+        {:x (:x roid) , :y (:y roid) , :speed-y (:speed-y roid) ,
+         :speed-x (* 1.5 (:speed-x roid)) , :size (/ (:size roid) 2) , :rotation (rand-int 360)})
+  )
+
+(defn split-destroyed-asteroids [roids]
+  (let [destroyed (filter #(:destroyed %) roids)]
+    (reduce #(concat %1 (split-asteroid %2)) roids destroyed)
+    )
+  )
+
 (defn update-all-asteroids! []
   (swap! app-state assoc :asteroids (->> (:asteroids @app-state)
                                         (map update-asteroid)
-                                        ; add two smaller asteroids for destroyed ones
-                                        ; remove destroyed asteroids
+                                        split-destroyed-asteroids
+                                        (filter #(not (:destroyed %)))
                                       )
                                     )
   )
