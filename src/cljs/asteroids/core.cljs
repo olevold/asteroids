@@ -17,7 +17,7 @@
     )
   )
 
-(defn update-asteroid! [roid]
+(defn update-asteroid [roid]
   (-> roid
     (assoc :x (wraparound (:x roid) (:speed-x roid) 820 -20))
     (assoc :y (wraparound (:y roid) (:speed-y roid) 620 -20))
@@ -25,7 +25,12 @@
   )
 
 (defn update-all-asteroids! []
-  (swap! app-state assoc :asteroids (map update-asteroid! (:asteroids @app-state)))
+  (swap! app-state assoc :asteroids (->> (:asteroids @app-state)
+                                        (map update-asteroid)
+                                        ; add two smaller asteroids for destroyed ones
+                                        ; remove destroyed asteroids
+                                      )
+                                    )
   )
 
 ;; -------------------------
