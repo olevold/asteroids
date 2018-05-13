@@ -40,22 +40,37 @@
                             (:rotation props))}]
   )
 
+(defn asteroid-debug-info [props]
+  [:div.entityDebug
+    [:div [:strong "Location: "] (:x props) ", " (:y props)]
+  ;  [:button "Destroy"]
+  ]
+  )
+
 (defn screen [asteroids]
   (js/setTimeout update-all-asteroids! 40)
-    [:svg {:viewBox "0 0 800 600"}
-      (for [astr asteroids]
-        ^{:key astr} [asteroid astr]
-      )]
+  [:svg {:viewBox "0 0 800 600"}
+    (for [astr asteroids]
+      ^{:key astr} [asteroid astr]
+    )]
+  )
 
+(defn entity-list [entities]
+  [:div#entitylist
+  (for [entity entities]
+    ^{:key entity} [asteroid-debug-info entity]
+    )]
   )
 
 (defn home-page []
-  [:div [:h2 "Welcome to asteroids"]
+  [:div [:h2 "Asteroids in SVG"]
    [:div [:a {:href "/about"} "go to about page"]]
-   [:div [screen (:asteroids @app-state)] ]])
+   [:div [screen (:asteroids @app-state)] [entity-list (:asteroids @app-state)]]
+   ])
 
 (defn about-page []
   [:div [:h2 "About asteroids"]
+    "This will gradually become a clone of the arcade classic Asteroids. It's written in clojurescript/reagent and uses SVG to draw the game screen."
    [:div [:a {:href "/"} "go to the home page"]]])
 
 

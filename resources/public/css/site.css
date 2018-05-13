@@ -1,6 +1,6 @@
 .body-container {
   font-family: 'Helvetica Neue', Verdana, Helvetica, Arial, sans-serif;
-  max-width: 800px;
+  max-width: 1000px;
   margin: 0 auto;
   padding-top: 72px;
   -webkit-font-smoothing: antialiased;
@@ -33,10 +33,26 @@ a:hover {
   text-decoration: underline;
 }
 
+#entitylist {
+  float: right;
+  display: flex;
+  flex-direction: column;
+}
+
+.entityDebug {
+  width: 200px;
+  padding: 4px;
+  border-style: solid;
+  border-width: 1px;
+  border-radius: 8px;
+  margin: 10px;
+}
+
 svg {
   background-color:  black;
   width: 600px;
   height: 450px;
+  float: left;
 }
 
 polygon {
