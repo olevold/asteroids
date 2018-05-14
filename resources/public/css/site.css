@@ -40,7 +40,8 @@ a:hover {
 }
 
 .entityDebug {
-  width: 200px;
+  font-size: 0.8em;
+  width: 220px;
   padding: 4px;
   border-style: solid;
   border-width: 1px;
