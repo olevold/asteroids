@@ -2,6 +2,8 @@
 
 This will gradually become a clone of the arcade classic Asteroids. It's written in clojurescript/reagent and uses SVG to draw the game screen.
 
+Try it here: https://svg-asteroids.herokuapp.com/
+
 ## Development mode
 
 To start the Figwheel compiler, navigate to the project folder and run the following command in the terminal:
