@@ -87,10 +87,10 @@
                                   [ring/ring-devel "1.6.3"]
                                   [prone "1.5.2"]
                                   [figwheel-sidecar "0.5.16"]
-                                  [org.clojure/tools.nrepl "0.2.13"]
+                                  [nrepl "0.4.5"]
                                   [com.cemerick/piggieback "0.2.2"]
                                   [pjstadig/humane-test-output "0.8.3"]
-                                  
+
  ]
 
                    :source-paths ["env/dev/clj"]
