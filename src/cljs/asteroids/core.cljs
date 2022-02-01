@@ -4,8 +4,26 @@
               [accountant.core :as accountant]
               [reagent.format :refer [format]]))
 
-(defonce app-state (atom {:asteroids '({:x 20 :y 20 :size 4 :speed-x 2.2 :speed-y 1.1 :rotation 13 :key 1}
-                                      {:x 795 :y 8 :size 4 :speed-x -1.9 :speed-y 1.3 :rotation 184 :key 2})}))
+(defonce app-state (atom {:asteroids '(
+                            {:x 20 :y 20 :size 4 :speed-x 2.2 :speed-y 1.1 :rotation 13 :key 1}
+                            {:x 795 :y 8 :size 4 :speed-x -1.9 :speed-y 1.3 :rotation 184 :key 2}
+                            )
+                          :ship {:x 400 :y 300 :rotation 0}
+                          :next-rotation 0
+                    }
+                  )
+                )
+                
+(.addEventListener
+  js/document
+  "keydown"
+  (fn [e]
+    (cond
+      (= "ArrowRight" (.-key e)) (swap! app-state update-in [:next-rotation] + 4)
+      (= "ArrowLeft" (.-key e)) (swap! app-state update-in [:next-rotation] - 4)
+      )
+    )
+  )
 
 (defn wraparound [val increment max-val min-val]
   (let [new-val (+ val increment)]
@@ -41,7 +59,8 @@
     )
   )
 
-(defn update-all-asteroids! []
+(defn update-all-entities! []
+  (swap! app-state assoc-in [:ship :rotation] (:next-rotation @app-state))
   (swap! app-state assoc :asteroids (->> (:asteroids @app-state)
                                         (map update-asteroid)
                                         split-destroyed-asteroids
@@ -52,6 +71,15 @@
 
 ;; -------------------------
 ;; Views
+
+(defn ship [props]
+  [:polygon {:points "0 -15 -9 15 9 15"
+             :fill "none"
+             :transform (format "translate (%d %d) rotate(%d)"
+                            (:x props) (:y props)  (:rotation props))
+              }
+        ]
+  )
 
 (defn asteroid [props]
   [:polygon {:points "-18,-8 -3,-5 -8,-18 6,-18 18,-8 18,8 11,19 -9,22 -6,6 -18,8"
@@ -70,12 +98,13 @@
   ]
   )
 
-(defn screen [asteroids]
-  (js/setTimeout update-all-asteroids! 80)
+(defn screen [asteroids ship_]
+  (js/setTimeout update-all-entities!  80)
   [:svg {:viewBox "0 0 800 600"}
     (for [astr asteroids]
       ^{:key (:key astr)} [asteroid astr]
-    )]
+    )
+    (ship ship_)]
   )
 
 (defn entity-list [entities]
@@ -86,9 +115,10 @@
   )
 
 (defn home-page []
-  [:div [:h2 "Asteroids in SVG"]
+  [:div
+   [:h2]
    [:div [:a {:href "/about"} "go to about page"]]
-   [:div [screen (:asteroids @app-state)] [entity-list (:asteroids @app-state)]]
+   [:div [screen (:asteroids @app-state) (:ship @app-state)] [entity-list (:asteroids @app-state)]]
    ])
 
 (defn about-page []
