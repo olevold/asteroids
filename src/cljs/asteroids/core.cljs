@@ -5,8 +5,8 @@
               [reagent.format :refer [format]]))
 
 (def app-state (atom {:asteroids '(
-                            {:x 20 :y 20 :size 4 :speed-x 2.2 :speed-y 1.1 :rotation 13 :key 1}
-                            {:x 795 :y 8 :size 4 :speed-x -1.9 :speed-y 1.3 :rotation 184 :key 2}
+                            {:x 20 :y 20 :size 4 :speed-x 1.8 :speed-y 1.1 :rotation 13 :key 1}
+                            {:x 795 :y 8 :size 4 :speed-x -1.3 :speed-y 1.3 :rotation 184 :key 2}
                             )
                           :ship {:x 400 :y 300 :rotation 0}
                           :destroyed #{}
@@ -59,7 +59,7 @@
   )
 
 (defn split-asteroid [roid]
-  (if (> (:size roid) 1)
+  (if (> (:size roid) 0.3)
     (list {:x (:x roid) , :y (:y roid) , :speed-x (:speed-x roid) ,
          :speed-y (* 1.5 (:speed-y roid)) , :size (/ (:size roid) 2) , :rotation (rand-int 360) , :key (rand-int 1000000)}
         {:x (:x roid) , :y (:y roid) , :speed-y (:speed-y roid) ,
@@ -94,8 +94,8 @@
       (reset! app-state {
         :ship (assoc ship :rotation
             (cond
-                left (-> ship (get :rotation) (- 4))
-                right (-> ship (get :rotation) (+ 4))
+                left (-> ship (get :rotation) (- 12))
+                right (-> ship (get :rotation) (+ 12))
                 :else (:rotation ship)
               )
           )
@@ -109,12 +109,12 @@
                         (filter #(not (destroyed? %)))
                         doall
                     )
-        :bullets (if fire
+        :bullets (if (and fire (< (count bullets) 5))
           (conj bullets {:x (:x ship)
                          :y (:y ship)
-                         :ttl 30
-                         :speed-x (->> ship :rotation degrees-to-radians Math/sin (* 10))
-                         :speed-y (->> ship :rotation degrees-to-radians Math/cos (* -10))
+                         :ttl 14
+                         :speed-x (->> ship :rotation degrees-to-radians Math/sin (* 18))
+                         :speed-y (->> ship :rotation degrees-to-radians Math/cos (* -18))
                          :key (rand-int 1000000)
                          })
           bullets)
@@ -158,7 +158,7 @@
   )
 
 (defn screen [asteroids bullets ship_]
-  (js/setTimeout update-all-entities!  80)
+  (js/setTimeout update-all-entities!  60)
   [:svg {:viewBox "0 0 800 600"}
     (for [astr asteroids]
       ^{:key (:key astr)} [asteroid astr]
