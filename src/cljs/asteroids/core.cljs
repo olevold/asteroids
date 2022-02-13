@@ -4,26 +4,42 @@
               [accountant.core :as accountant]
               [reagent.format :refer [format]]))
 
-(defonce app-state (atom {:asteroids '(
+(def app-state (atom {:asteroids '(
                             {:x 20 :y 20 :size 4 :speed-x 2.2 :speed-y 1.1 :rotation 13 :key 1}
                             {:x 795 :y 8 :size 4 :speed-x -1.9 :speed-y 1.3 :rotation 184 :key 2}
                             )
                           :ship {:x 400 :y 300 :rotation 0}
-                          :next-rotation 0
+                          :destroyed #{}
+                          :bullets '()
+                          :fire false
                     }
                   )
                 )
-                
+
 (.addEventListener
   js/document
   "keydown"
   (fn [e]
     (cond
-      (= "ArrowRight" (.-key e)) (swap! app-state update-in [:next-rotation] + 4)
-      (= "ArrowLeft" (.-key e)) (swap! app-state update-in [:next-rotation] - 4)
+      (= "ArrowRight" (.-key e)) (swap! app-state assoc :right true)
+      (= "ArrowLeft" (.-key e)) (swap! app-state assoc :left true)
+      (= "Control" (.-key e)) (swap! app-state assoc :fire true)
       )
     )
   )
+
+  (.addEventListener
+    js/document
+    "keyup"
+    (fn [e]
+      (cond
+        (= "ArrowRight" (.-key e)) (swap! app-state assoc :right false)
+        (= "ArrowLeft" (.-key e)) (swap! app-state assoc :left false)
+        )
+      )
+    )
+
+(defn degrees-to-radians [degrees] (-> degrees (* 3.14) (/ 180)))
 
 (defn wraparound [val increment max-val min-val]
   (let [new-val (+ val increment)]
@@ -35,10 +51,10 @@
     )
   )
 
-(defn update-asteroid [roid]
-  (-> roid
-    (assoc :x (wraparound (:x roid) (:speed-x roid) 820 -20))
-    (assoc :y (wraparound (:y roid) (:speed-y roid) 620 -20))
+(defn update-entity [entity]
+  (-> entity
+    (assoc :x (wraparound (:x entity) (:speed-x entity) 820 -20))
+    (assoc :y (wraparound (:y entity) (:speed-y entity) 620 -20))
     )
   )
 
@@ -53,20 +69,57 @@
 
   )
 
+(defn destroyed? [roid] (contains? (:destroyed @app-state) (:key roid)))
+
 (defn split-destroyed-asteroids [roids]
-  (let [destroyed (filter #(:destroyed %) roids)]
+  (let [destroyed (filter destroyed? roids)]
     (reduce #(concat %1 (split-asteroid %2)) roids destroyed)
     )
   )
 
 (defn update-all-entities! []
-  (swap! app-state assoc-in [:ship :rotation] (:next-rotation @app-state))
-  (swap! app-state assoc :asteroids (->> (:asteroids @app-state)
-                                        (map update-asteroid)
-                                        split-destroyed-asteroids
-                                        (filter #(not (:destroyed %)))
-                                      )
-                                    )
+  (let [ship           (:ship @app-state)
+        destroyed-list (:destroyed @app-state)
+        fire           (:fire @app-state)
+        left           (:left @app-state)
+        right          (:right @app-state)
+        asteroids      (:asteroids @app-state)
+        bullets        (->>
+                          @app-state
+                          :bullets
+                          (map update-entity)
+                          (map #(update % :ttl dec))
+                          (filter #(> (:ttl %) 0)))
+        ]
+      (reset! app-state {
+        :ship (assoc ship :rotation
+            (cond
+                left (-> ship (get :rotation) (- 4))
+                right (-> ship (get :rotation) (+ 4))
+                :else (:rotation ship)
+              )
+          )
+        :destroyed (:destroyed @app-state)
+        :fire false
+        :left left
+        :right right
+        :asteroids (->> asteroids
+                        (map update-entity)
+                        split-destroyed-asteroids
+                        (filter #(not (destroyed? %)))
+                        doall
+                    )
+        :bullets (if fire
+          (conj bullets {:x (:x ship)
+                         :y (:y ship)
+                         :ttl 30
+                         :speed-x (->> ship :rotation degrees-to-radians Math/sin (* 10))
+                         :speed-y (->> ship :rotation degrees-to-radians Math/cos (* -10))
+                         :key (rand-int 1000000)
+                         })
+          bullets)
+        })
+    )
   )
 
 ;; -------------------------
@@ -79,6 +132,12 @@
                             (:x props) (:y props)  (:rotation props))
               }
         ]
+  )
+
+(defn bullet [props]
+  [:circle {:r 1
+            :fill "white"
+            :transform (format "translate (%d %d)" (:x props) (:y props))}]
   )
 
 (defn asteroid [props]
@@ -94,15 +153,18 @@
   [:div.entityDebug
     [:div [:strong "Id: "] (:key props) ]
     [:div [:strong "Location: "] (format "%.2f , %.2f" (:x props) (:y props))]
-    [:button {:on-click (fn [] (swap! app-state assoc :asteroids (map #(if (= (:key %) (:key props)) (assoc % :destroyed true) %) (:asteroids @app-state))))} "Destroy" ]
+    [:button {:on-click (fn [] (swap! app-state assoc :destroyed (conj (:destroyed @app-state) (:key props))))} "Destroy" ]
   ]
   )
 
-(defn screen [asteroids ship_]
+(defn screen [asteroids bullets ship_]
   (js/setTimeout update-all-entities!  80)
   [:svg {:viewBox "0 0 800 600"}
     (for [astr asteroids]
       ^{:key (:key astr)} [asteroid astr]
+    )
+    (for [bullet_ bullets]
+      ^{:key (:key bullet_)} [bullet bullet_]
     )
     (ship ship_)]
   )
@@ -118,7 +180,7 @@
   [:div
    [:h2]
    [:div [:a {:href "/about"} "go to about page"]]
-   [:div [screen (:asteroids @app-state) (:ship @app-state)] [entity-list (:asteroids @app-state)]]
+   [:div [screen (:asteroids @app-state) (:bullets @app-state) (:ship @app-state) ] [entity-list (:asteroids @app-state)]]
    ])
 
 (defn about-page []
